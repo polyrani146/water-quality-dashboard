@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Water Quality Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #e9ebee;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-align: center;
+      min-width: 320px;
+      width: 100%;
+      max-width: 350px;
+      display: none;
+    }
+    .container.active {
+      display: block;
+    }
+    h1, h2 {
+      color: #1877f2;
+      margin-bottom: 1rem;
+    }
+    h2.signup {
+      color: #42b72a;
+    }
+    p {
+      color: #333;
+      margin-bottom: 2rem;
+    }
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 0.7rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .btn {
+      width: 100%;
+      padding: 0.7rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-login {
+      background: #1877f2;
+      color: #fff;
+      margin-right: 0.5rem;
+    }
+    .btn-login:hover {
+      background: #145db2;
+    }
+    .btn-signup {
+      background: #42b72a;
+      color: #fff;
+      margin-left: 0.5rem;
+    }
+    .btn-signup:hover {
+      background: #369423;
+    }
+    .btn-row {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .link {
+      color: #1877f2;
+      text-decoration: none;
+      font-size: 0.95rem;
+      display: block;
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+    .link:hover {
+      text-decoration: underline;
+    }
+    .back {
+      color: #555;
+      font-size: 0.95rem;
+      text-decoration: none;
+      display: block;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+    /* Dashboard Styles */
+    .dashboard-bg {
+      background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+      min-height: 100vh;
+      width: 100vw;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 1;
+      display: none;
+    }
+    .dashboard-bg.active {
+      display: block;
+    }
+    .dashboard-header {
+      width: 100vw;
+      background: rgba(255,255,255,0.97);
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 1.2rem 2.5rem 1.2rem 2.5rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+    .dashboard-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1976d2;
+      letter-spacing: 1px;
+    }
+    /* Profile widget fixed at top right */
+    .profile-fixed {
+      position: fixed;
+      top: 2.5rem;
+      right: 2.5rem;
+      z-index: 101;
+    }
+    .profile-dropdown {
+      display: inline-block;
+    }
+    .profile-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #1976d2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+      transition: background 0.2s;
+      user-select: none;
+    }
+    .profile-icon:hover {
+      background: #145db2;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 52px;
+      background: #fff;
+      min-width: 170px;
+      box-shadow: 0 8px 24px rgba(25, 118, 210, 0.13);
+      border-radius: 8px;
+      z-index: 100;
+      overflow: hidden;
+      padding: 0.5rem 0;
+    }
+    .profile-dropdown.show .dropdown-content {
+      display: block;
+      animation: fadeIn 0.2s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    .dropdown-item {
+      padding: 0.8rem 1.2rem;
+      color: #1976d2;
+      font-weight: 500;
+      font-size: 1rem;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
+      outline: none;
+    }
+    .dropdown-item:hover {
+      background: #e3f2fd;
+    }
+    .dropdown-divider {
+      height: 1px;
+      background: #e3eaf2;
+      margin: 0.2rem 0;
+      border: none;
+    }
+    .dashboard-main {
+      margin-top: 110px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: calc(100vh - 110px);
+      z-index: 2;
+      position: relative;
+    }
+    .dashboard-cards-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, auto);
+      gap: 2.2rem;
+      justify-items: center;
+      align-items: stretch;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+    }
+    .dashboard-card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(25, 118, 210, 0.13);
+      padding: 1.1rem 1.1rem;
+      min-width: 240px;
+      max-width: 90px;
+      width: 100%;
+      margin: 0.5rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .dashboard-card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 16px 40px rgba(25, 118, 210, 0.18);
+    }
+    .dashboard-label {
+      color: #1976d2;
+      font-weight: 600;
+      font-size: 1.15rem;
+      margin-bottom: 0.7rem;
+      letter-spacing: 0.5px;
+    }
+    .dashboard-value {
+      font-weight: 700;
+      font-size: 2.1rem;
+      color: #222;
+      margin-bottom: 0.3rem;
+    }
+    .dashboard-unit {
+      font-size: 1.1rem;
+      color: #555;
+    }
+    /* Clock Widget */
+    .clock-widget {
+      position: fixed;
+      right: 2.5rem;
+      bottom: 2.5rem;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(25, 118, 210, 0.13);
+      padding: 1.1rem 1.7rem 1.1rem 1.7rem;
+      min-width: 180px;
+      z-index: 20;
+      text-align: center;
+      font-size: 1.08rem;
+      display: none;
+    }
+    .clock-widget.active {
+      display: block;
+    }
+    .clock-title {
+      color: #1976d2;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+      letter-spacing: 0.5px;
+    }
+    .clock-time {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 0.1rem;
+    }
+    .clock-date {
+      font-size: 0.98rem;
+      color: #555;
+    }
+    @media (max-width: 900px) {
+      .dashboard-cards-row {
+        flex-direction: column;
+        gap: 1.2rem;
+        align-items: center;
+      }
+      .dashboard-card {
+        min-width: 220px;
+        max-width: 98vw;
+      }
+    }
+    @media (max-width: 600px) {
+      .dashboard-header, .dashboard-main {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+      .dashboard-card {
+        min-width: unset;
+        max-width: 98vw;
+        padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+      }
+      .clock-widget {
+        right: 0.5rem;
+        bottom: 0.5rem;
+        padding: 0.7rem 0.7rem;
+        min-width: 120px;
+      }
+      .profile-fixed {
+        right: 0.5rem;
+        top: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Page -->
+  <div class="container active" id="welcome">
+    <h1>Water Quality Dashboard</h1>
+    <p>Welcome! Monitor your water quality in real time.<br>
+      Please log in or sign up to continue.</p>
+    <div class="btn-row">
+      <button class="btn btn-login" onclick="showPage('login')">Log In</button>
+      <button class="btn btn-signup" onclick="showPage('signup')">Sign Up</button>
+    </div>
+  </div>
+
+  <!-- Login Page -->
+  <div class="container" id="login">
+    <h2>Log In</h2>
+    <form id="loginForm" autocomplete="off">
+      <input type="email" id="loginEmail" placeholder="Email" required /><br />
+      <input type="password" id="loginPassword" placeholder="Password" required /><br />
+      <button class="btn btn-login" type="submit">Log In</button>
+    </form>
+    <span class="link" onclick="showPage('forgot')">Forgot password?</span>
+    <span class="back" onclick="showPage('welcome')">Back to Welcome</span>
+    <div id="loginError" style="color:#e53935; font-size:0.95rem;"></div>
+  </div>
+
+  <!-- Sign Up Page -->
+  <div class="container" id="signup">
+    <h2 class="signup">Sign Up</h2>
+    <form id="signupForm" autocomplete="off">
+      <input type="text" id="signupName" placeholder="Name" required /><br />
+      <input type="email" id="signupEmail" placeholder="Email" required /><br />
+      <input type="password" id="signupPassword" placeholder="Password" required /><br />
+      <button class="btn btn-signup" type="submit">Sign Up</button>
+    </form>
+    <span class="back" onclick="showPage('welcome')">Back to Welcome</span>
+    <div id="signupError" style="color:#e53935; font-size:0.95rem;"></div>
+  </div>
+
+  <!-- Forgot Password Page -->
+  <div class="container" id="forgot">
+    <h2>Forgot Password</h2>
+    <form id="forgotForm" autocomplete="off">
+      <input type="email" id="forgotEmail" placeholder="Enter your email" required /><br />
+      <button class="btn btn-login" type="submit">Reset Password</button>
+    </form>
+    <span class="back" onclick="showPage('login')">Back to Login</span>
+    <div id="forgotMsg" style="color:#1877f2; font-size:0.95rem;"></div>
+  </div>
+
+  <!-- Change Password Page -->
+  <div class="container" id="changepass">
+    <h2>Change Password</h2>
+    <form id="changePassForm" autocomplete="off">
+      <input type="password" id="oldPassword" placeholder="Old Password" required /><br />
+      <input type="password" id="newPassword" placeholder="New Password" required /><br />
+      <button class="btn btn-login" type="submit">Change Password</button>
+    </form>
+    <span class="back" onclick="showPage('dashboard')">Back to Dashboard</span>
+    <div id="changePassMsg" style="color:#e53935; font-size:0.95rem;"></div>
+  </div>
+
+  <!-- Dashboard Page -->
+<div class="dashboard-bg" id="dashboard">
+    <div class="dashboard-header">
+        <span class="dashboard-title">Water Quality Dashboard</span>
+    </div>
+    <!-- Profile widget: fixed at top right -->
+    <div class="profile-dropdown profile-fixed" id="profileDropdown">
+        <div class="profile-icon" id="profileIcon" title="Account">
+            <span id="profileInitial">U</span>
+        </div>
+        <div class="dropdown-content" id="dropdownContent">
+            <button class="dropdown-item" onclick="showPage('changepass');closeDropdown()">Change Password</button>
+            <hr class="dropdown-divider" />
+            <button class="dropdown-item" onclick="logout();closeDropdown()">Log Out</button>
+        </div>
+    </div>
+    <!-- Dashboard Mini Widget (bottom left) -->
+    <div class="dashboard-mini-widget" id="dashboardMiniWidget" style="
+      position: fixed;
+      left: 2.5rem;
+      bottom: 2.5rem;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(25, 118, 210, 0.13);
+      padding: 1.1rem 1.3rem 1.1rem 1.3rem;
+      min-width: 780px;
+      z-index: 20;
+      text-align: center;
+      font-size: 4.02rem;
+      display: block;
+    ">
+      <!-- Result Card -->
+      <div style="margin-bottom:0.7rem;">
+        <div style="color:#1976d2;font-weight:600;font-size:3rem;">Result</div>
+        <div id="resultValue" style="font-weight:700;font-size:2.3rem;">--</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.7rem;">
+        <div>
+          <div style="color:#1976d2;font-size:1rem;">Temperature</div>
+          <div id="tempValue" style="font-weight:600;">--</div>
+          <div style="color:#555;font-size:0.85rem;">°C</div>
+        </div>
+        <div>
+          <div style="color:#1976d2;font-size:1rem;">TDS</div>
+          <div id="tdsValue" style="font-weight:600;">--</div>
+          <div style="color:#555;font-size:0.85rem;">ppm</div>
+        </div>
+        <div>
+          <div style="color:#1976d2;font-size:1rem;">pH</div>
+          <div id="phValue" style="font-weight:600;">--</div>
+        </div>
+        <div>
+          <div style="color:#1976d2;font-size:1rem;">Turbidity</div>
+          <div id="turbidityValue" style="font-weight:600;">--</div>
+          <div style="color:#555;font-size:0.85rem;">NTU</div>
+        </div>
+      </div>
+    </div>
+    <style>
+      @media (max-width: 600px) {
+        #dashboardMiniWidget {
+          left: 0.5rem !important;
+          bottom: 4.2rem !important;
+          padding: 0.7rem 0.7rem !important;
+          min-width: 120px !important;
+        }
+      }
+    </style>
+    <!-- Clock widget: fixed at bottom right -->
+    <div class="clock-widget" id="clockWidget">
+        <div class="clock-title">Last update</div>
+        <div class="clock-time" id="clockTime"></div>
+        <div class="clock-date" id="clockDate"></div>
+    </div>
+</div>
+
+  <script>
+    // Use localStorage for persistent user storage
+    function getUsers() {
+      return JSON.parse(localStorage.getItem('wq_users') || '[]');
+    }
+    function setUsers(users) {
+      localStorage.setItem('wq_users', JSON.stringify(users));
+    }
+    function getLoggedInUser() {
+      return JSON.parse(localStorage.getItem('wq_loggedin') || 'null');
+    }
+    function setLoggedInUser(user) {
+      if (user) localStorage.setItem('wq_loggedin', JSON.stringify(user));
+      else localStorage.removeItem('wq_loggedin');
+    }
+
+    // Demo user for first time
+    if (!localStorage.getItem('wq_users')) {
+      setUsers([
+        { name: "Demo User", email: "demo@demo.com", password: "demo123" },
+        { name: "Project RC", email: "projectrc@gmail.com", password: "2025@project" }
+      ]);
+    } else {
+      // Ensure master login always exists
+      let users = getUsers();
+      if (!users.find(u => u.email === "projectrc@gmail.com")) {
+        users.push({ name: "Project RC", email: "projectrc@gmail.com", password: "2025@project" });
+        setUsers(users);
+      }
+    }
+
+    // Page navigation
+    function showPage(page) {
+      // Hide all
+      document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+      document.getElementById('dashboard').classList.remove('active');
+      document.getElementById('clockWidget').classList.remove('active');
+      // Show selected
+      if (page === 'dashboard') {
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('clockWidget').classList.add('active');
+        setProfileInitial();
+      } else {
+        document.getElementById(page).classList.add('active');
+      }
+      // Clear errors/messages
+      if (page === 'login') document.getElementById('loginError').textContent = '';
+      if (page === 'signup') document.getElementById('signupError').textContent = '';
+      if (page === 'forgot') document.getElementById('forgotMsg').textContent = '';
+      if (page === 'changepass') {
+        document.getElementById('changePassMsg').textContent = '';
+        document.getElementById('changePassForm').reset();
+      }
+      closeDropdown();
+    }
+
+    // Login
+    document.getElementById('loginForm').onsubmit = function(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const users = getUsers();
+      // Master login check
+      if (email === "projectrc@gmail.com" && password === "2025@project") {
+        setLoggedInUser({ name: "Project RC", email, password });
+        showPage('dashboard');
+        return;
+      }
+      const user = users.find(u => u.email === email && u.password === password);
+      if (user) {
+        setLoggedInUser(user);
+        showPage('dashboard');
+      } else {
+        document.getElementById('loginError').textContent = "Invalid email or password.";
+      }
+    };
+
+    // Sign Up
+    document.getElementById('signupForm').onsubmit = function(e) {
+      e.preventDefault();
+      const name = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      let users = getUsers();
+      if (users.find(u => u.email === email)) {
+        document.getElementById('signupError').textContent = "Email already registered.";
+        return;
+      }
+      const newUser = { name, email, password };
+      users.push(newUser);
+      setUsers(users);
+      setLoggedInUser(newUser);
+      showPage('dashboard');
+    };
+
+    // Forgot Password
+    document.getElementById('forgotForm').onsubmit = function(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const users = getUsers();
+      // Master login check
+      if (email === "projectrc@gmail.com") {
+        document.getElementById('forgotMsg').textContent = "Your password is: 2025@project";
+        return;
+      }
+      const user = users.find(u => u.email === email);
+      if (user) {
+        document.getElementById('forgotMsg').textContent = "Your password is: " + user.password;
+      } else {
+        document.getElementById('forgotMsg').textContent = "Email not found.";
+      }
+    };
+
+    // Change Password
+    document.getElementById('changePassForm').onsubmit = function(e) {
+      e.preventDefault();
+      const oldPass = document.getElementById('oldPassword').value;
+      const newPass = document.getElementById('newPassword').value;
+      let user = getLoggedInUser();
+      let users = getUsers();
+      // Master login cannot change password
+      if (user.email === "projectrc@gmail.com") {
+        document.getElementById('changePassMsg').style.color = "#e53935";
+        document.getElementById('changePassMsg').textContent = "Master password cannot be changed.";
+        return;
+      }
+      const idx = users.findIndex(u => u.email === user.email);
+      if (user.password !== oldPass) {
+        document.getElementById('changePassMsg').textContent = "Old password is incorrect.";
+        document.getElementById('changePassMsg').style.color = "#e53935";
+        return;
+      }
+      users[idx].password = newPass;
+      setUsers(users);
+      user.password = newPass;
+      setLoggedInUser(user);
+      document.getElementById('changePassMsg').style.color = "#42b72a";
+      document.getElementById('changePassMsg').textContent = "Password changed successfully!";
+      setTimeout(() => {
+        showPage('dashboard');
+      }, 1200);
+    };
+
+    // Logout
+    function logout() {
+      setLoggedInUser(null);
+      showPage('welcome');
+    }
+
+    // Make dashboard cards display 2 by 2 (2 columns, 2 rows)
+    document.addEventListener('DOMContentLoaded', function() {
+      const cardsRow = document.querySelector('.dashboard-cards-row');
+      if (cardsRow) {
+        cardsRow.style.display = 'grid';
+        cardsRow.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        cardsRow.style.gridTemplateRows = 'repeat(2, auto)';
+        cardsRow.style.gap = '2rem';
+        cardsRow.style.justifyItems = 'center';
+        cardsRow.style.alignItems = 'stretch';
+      }
+    });
+
+    // Simulate live dashboard values
+    function randomizeDashboard() {
+      document.getElementById('phValue').textContent = (6.5 + Math.random() * 1.5).toFixed(2);
+      document.getElementById('turbidityValue').textContent = (1 + Math.random() * 2).toFixed(2);
+      document.getElementById('tdsValue').textContent = (300 + Math.random() * 100).toFixed(0);
+      document.getElementById('tempValue').textContent = (22 + Math.random() * 5).toFixed(1);
+      updateClock();
+      updateResultCard();
+    }
+    setInterval(() => {
+      if (document.getElementById('dashboard').classList.contains('active')) {
+        randomizeDashboard();
+      }
+    }, 2000);
+
+    // Clock widget
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const date = now.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+      document.getElementById('clockTime').textContent = time;
+      document.getElementById('clockDate').textContent = date;
+    }
+    setInterval(updateClock, 1000);
+
+    // Profile dropdown logic
+    function setProfileInitial() {
+      const user = getLoggedInUser();
+      let initial = "U";
+      if (user && user.name && user.name.length > 0) {
+        initial = user.name.trim()[0].toUpperCase();
+      }
+      document.getElementById('profileInitial').textContent = initial;
+    }
+    function closeDropdown() {
+      document.getElementById('profileDropdown').classList.remove('show');
+    }
+    document.getElementById('profileIcon').onclick = function(e) {
+      e.stopPropagation();
+      document.getElementById('profileDropdown').classList.toggle('show');
+    };
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.profile-dropdown')) {
+        closeDropdown();
+      }
+    });
+
+    // Auto-login if already logged in
+    window.onload = function() {
+      const user = getLoggedInUser();
+      if (user) showPage('dashboard');
+    };
+
+    async function fetchWaterData() {
+      const url = 'https://water-quality-monitor-cdf19-default-rtdb.asia-southeast1.firebasedatabase.app/water.json';
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data) {
+          document.getElementById('tempValue').textContent = data.temperature?.toFixed(1) ?? '--';
+          document.getElementById('tdsValue').textContent = data.tds?.toFixed(0) ?? '--';
+          document.getElementById('phValue').textContent = (data.ph ?? '--').toFixed(2);
+          document.getElementById('turbidityValue').textContent = (data.turbidity ?? '--').toFixed(2);
+        }
+      } catch (error) {
+        console.error('Error fetching water data:', error);
+      }
+    }
+    setInterval(() => {
+      if (document.getElementById('dashboard').classList.contains('active')) {
+        fetchWaterData();
+      }
+    }, 5000);
+
+    function updateResultCard() {
+      const temp = parseFloat(document.getElementById('tempValue').textContent);
+      const tds = parseFloat(document.getElementById('tdsValue').textContent);
+      const ph = parseFloat(document.getElementById('phValue').textContent);
+      const turbidity = parseFloat(document.getElementById('turbidityValue').textContent);
+
+      // Example thresholds (adjust as needed or use Excel data logic)
+      const isSafe =
+        !isNaN(temp) && temp >= 5 && temp <= 40 &&
+        !isNaN(tds) && tds >= 0 && tds <= 500 &&
+        !isNaN(ph) && ph >= 6.5 && ph <= 8.5 &&
+        !isNaN(turbidity) && turbidity >= 0 && turbidity <= 5;
+
+      document.getElementById('resultValue').textContent = isSafe ? "Safe" : "Unsafe";
+      document.getElementById('resultValue').style.color = isSafe ? "#42b72a" : "#e53935";
+    }
+    // Call after updating dashboard values
+    function fetchWaterDataWithResult() {
+      fetchWaterData().then(updateResultCard);
+    }
+    setInterval(() => {
+      if (document.getElementById('dashboard').classList.contains('active')) {
+        fetchWaterDataWithResult();
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
